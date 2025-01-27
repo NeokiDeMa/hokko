@@ -32,6 +32,13 @@ module marketplace::escrow_simple {
 
     // ====================== Public Functions ======================
 
+    /// @dev Creates a new offer for an item in the marketplace, emits an event for the offer, 
+    ///      stores the offer in the marketplace, and transfers the offer capability to the offerer.
+    /// @param market A mutable reference to the marketplace where the offer is being listed.
+    /// @param item_id The ID of the item being offered.
+    /// @param price The price of the item (in mist unit).
+    /// @param payment A Coin<SUI> object representing the payment for the offer.
+    /// @param ctx The transaction context of the sender.
     #[allow(lint(self_transfer))]
     public fun offer<T: key + store>(
         market: &mut MarketPlace,
@@ -67,6 +74,13 @@ module marketplace::escrow_simple {
         transfer::transfer(offer_cap, tx_context::sender(ctx));
     }
 
+    /// @dev Revokes an existing offer in the marketplace, removes it from the marketplace, 
+    ///      emits a revoke event, and transfers the remaining balance to the offer's owner.
+    /// @param market A mutable reference to the marketplace where the offer is being revoked.
+    /// @param offer_id The ID of the offer to be revoked.
+    /// @param item_id The ID of the item being revoked.
+    /// @param offer_cap The offer capability object associated with the offer.
+    /// @param ctx The transaction context of the sender.
     #[allow(lint(self_transfer))]
     public fun revoke_offer<T: key + store>(
         market: &mut MarketPlace,
@@ -92,6 +106,12 @@ module marketplace::escrow_simple {
         transfer::public_transfer(coin, tx_context::sender(ctx));
     }
 
+    /// @dev Accepts an offer in the marketplace, transfers the item, pays the market fee, 
+    ///      and returns the remaining balance to the offer owner.
+    /// @param market A mutable reference to the marketplace where the offer is being accepted.
+    /// @param offer_id The ID of the offer being accepted.
+    /// @param item The item being transferred as part of the offer.
+    /// @param ctx The transaction context of the sender.
     #[allow(lint(self_transfer))]
     public fun accept_offer<T: key + store>(
         market: &mut MarketPlace,
@@ -123,7 +143,12 @@ module marketplace::escrow_simple {
 
         escrow::emit_accept_offer_event(object::id(market), offer_id, item, price, 0, market_fee);
     }
-
+    /// @dev Declines an offer in the marketplace, removes it, and transfers the remaining balance 
+    ///      back to the offer owner. Emits a decline event.
+    /// @param market A mutable reference to the marketplace where the offer is being declined.
+    /// @param offer_id The ID of the offer being declined.
+    /// @param item The item associated with the declined offer.
+    /// @param ctx The transaction context of the sender.
     public fun decline_offer<T: key + store>(
         market: &mut MarketPlace,
         offer_id: ID,
@@ -154,6 +179,13 @@ module marketplace::escrow_simple {
     }
 
     // ====================== Package Internal Functions ======================
+    /// @dev Creates a new offer in the marketplace with a specified price and payment amount.
+    ///      It calculates the market fee based on the price and payment, then returns the created offer and offer cap.
+    /// @param market A mutable reference to the marketplace where the offer is being created.
+    /// @param item_id The ID of the item being offered.
+    /// @param price The price of the item (in mist unit).
+    /// @param payment The payment (in SUI) for the offer, which includes the price and market fee.
+    /// @param ctx The transaction context of the sender.
     public fun new_offer<T: key + store>(
         market: &mut MarketPlace,
         item_id: ID,

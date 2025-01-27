@@ -88,7 +88,18 @@ module marketplace::escrow {
         market_fee: u64,
     }
 
-    // ====================== Public Functions ======================
+    // ====================== User Functions ======================
+    /// @dev Creates and store an offer for an item in the kiosk extension. 
+    ///      This includes initializing the required offer object, configuring the kiosk extension if necessary, 
+    ///      and emitting an event for the created offer.
+    /// @param kiosk A mutable reference to the kiosk where the offer will be stored.
+    /// @param kiosk_cap A capability object that allows modification of the kiosk.
+    /// @param item_id The ID of the item being offered.
+    /// @param price The price of the item (in mist unit).
+    /// @param payment A Coin<SUI> object representing the payment.
+    /// @param policy A reference to the transfer policy applied to the offer.
+    /// @param market A reference to the marketplace where the offer is being made.
+    /// @param ctx The transaction context of the sender.
     #[allow(lint(self_transfer))]
     public fun offer<T: key + store>(
         kiosk: &mut Kiosk,
@@ -97,7 +108,7 @@ module marketplace::escrow {
         price: u64,
         payment: Coin<SUI>,
         policy: &TransferPolicy<T>,
-        market: &mut MarketPlace,
+        market: &MarketPlace,
         ctx: &mut TxContext,
     ) {
         // length of df_names is should be equal to length of df_object_ids
@@ -141,6 +152,15 @@ module marketplace::escrow {
         transfer::transfer(offer_cap, tx_context::sender(ctx));
     }
 
+    /// @dev Revokes an existing offer in the marketplace. This function removes the offer from 
+    ///      the kiosk's storage, deletes the offer and its capability, and refunds the balance to 
+    ///      the sender.
+    /// @param kiosk A mutable reference to the kiosk where the offer was stored.
+    /// @param kiosk_cap A capability object that allows modification of the kiosk.
+    /// @param offer_id The ID of the offer being revoked.
+    /// @param item_id The ID of the item associated with the offer.
+    /// @param offer_cap The capability object associated with the offer being revoked.
+    /// @param ctx The transaction context of the sender.
     #[allow(lint(self_transfer))]
     public fun revoke_offer<T: key + store>(
         kiosk: &mut Kiosk,
@@ -179,6 +199,21 @@ module marketplace::escrow {
         transfer::public_transfer(coin, tx_context::sender(ctx));
     }
 
+    /// @dev Accepts an offer in the marketplace. Transfers the item to the accepter's kiosk, 
+    ///      deducts and distributes fees (market and royalty), and processes the item transfer based 
+    ///      on the associated transfer policy.
+    /// @notice After calling `accept_offer`, the client-side must fulfill the custom transfer policy rules. 
+    ///         The `confirm_offer_accepted` function should be executed last to finalize the offer acceptance.
+    ///         The `OfferWrapper` is a hotpotato and should be processed in `confirm_offer_accepted`.
+    /// @param offerer_kiosk A mutable reference to the kiosk of the offerer where the offer exists.
+    /// @param offer_id The ID of the offer being accepted.
+    /// @param accepter_kiosk A mutable reference to the kiosk of the accepter where the item was stored.
+    /// @param accepter_kiosk_cap A capability object that allows modification of the accepter's kiosk.
+    /// @param item_id The ID of the item being transferred.
+    /// @param policy A mutable reference to the transfer policy applied to the item.
+    /// @param market A mutable reference to the marketplace where the market fee is paid.
+    /// @param ctx The transaction context of the sender.
+    /// @return A tuple containing an `OfferWrapper<T>` for the accepted offer and a `TransferRequest<T>` for the item transfer.
     public fun accept_offer<T: key + store>(
         offerer_kiosk: &mut Kiosk,
         offer_id: ID,
@@ -222,6 +257,14 @@ module marketplace::escrow {
         (OfferWrapper<T> { offer: offer }, request)
     }
 
+    /// @dev Confirms the acceptance of an offer, emits an event, destroys the offer object, and refunds 
+    ///      any remaining balance to the offerer.
+    /// @notice The `confirm_offer_accepted` function should be executed last to finalize the offer acceptance.
+    ///         The `OfferWrapper` is a hotpotato and should be processed in `confirm_offer_accepted`.
+    /// @param offer_wrapper A wrapper object containing the offer details.
+    /// @param request The transfer request associated with the item.
+    /// @param policy A reference to the transfer policy applied to the item.
+    /// @param ctx The transaction context of the sender.
     public fun confirm_offer_accepted<T: key + store>(
         // offerer_kiosk: &mut Kiosk,
         offer_wrapper: OfferWrapper<T>,
@@ -264,6 +307,12 @@ module marketplace::escrow {
         // kiosk_extension::storage_mut(Ext{}, offerer_kiosk).add(OfferKey<T>{offer: object::id(&offer), item: offer.item}, offer);
     }
 
+    /// @dev Declines an existing offer in the marketplace. This function removes the offer from 
+    ///      the kiosk's storage, refunds the offer's balance to the offerer, and emits a decline event.
+    /// @param offerer_kiosk A mutable reference to the kiosk where the offer was stored.
+    /// @param offer_id The ID of the offer being declined.
+    /// @param item The item associated with the offer being declined.
+    /// @param ctx The transaction context of the sender.
     public fun decline_offer<T: key + store>(
         offerer_kiosk: &mut Kiosk,
         offer_id: ID,
@@ -305,11 +354,22 @@ module marketplace::escrow {
     }
 
     // ====================== Package Internal Functions ======================
+    /// @dev Creates a new offer for an item in the marketplace. This function calculates 
+    ///      the market fee and royalty fee, ensures the payment covers all required fees, and 
+    ///      returns the created offer and its associated capability.
+    /// @param kiosk A mutable reference to the kiosk where the offer will be listed.
+    /// @param kiosk_cap A capability object that allows modification of the kiosk.
+    /// @param item_id The ID of the item being offered.
+    /// @param price The price of the item (in mist unit).
+    /// @param payment A Coin<SUI> object representing the payment for the offer.
+    /// @param policy A reference to the transfer policy applied to the offer.
+    /// @param market A reference to the marketplace.
+    /// @param ctx The transaction context of the sender.
+    /// @return A tuple containing the created `Offer<T>` and its associated `OfferCap<T>`.
     fun new_offer<T: key + store>(
         kiosk: &mut Kiosk,
         kiosk_cap: &KioskOwnerCap,
         item_id: ID,
-        // df_object_ids: vector<ID>,
         price: u64,
         payment: Coin<SUI>,
         policy: &TransferPolicy<T>,
@@ -330,12 +390,6 @@ module marketplace::escrow {
 
         assert!(payment.value() >= price + market_fee + royalty_fee, EInsufficientAmount);
 
-        // let df_infos = vec_map::empty<Name, ID>();
-        // let mut i = 0;
-        // while (i < df_names.length()) {
-        //     df_infos.insert(df_names[i], df_object_ids[i]);
-        //     i = i + 1;
-        // };
         let balance = payment.into_balance();
         let offer = Offer<T> {
             id: object::new(ctx),
@@ -356,6 +410,15 @@ module marketplace::escrow {
 
     // ====================== Emit Event Functions ======================
 
+    /// @dev Emits an event when a new offer is created in the marketplace. This event contains 
+    ///      information about the offer, including the kiosk, offer ID, item, price, and associated fees.
+    /// @param kiosk The ID of the kiosk where the offer is listed.
+    /// @param offer_id The ID of the newly created offer.
+    /// @param offer_cap The ID of the offer capability.
+    /// @param item The ID of the item being offered.
+    /// @param price The price of the item (in mist unit).
+    /// @param royalty_fee The royalty fee associated with the offer.
+    /// @param market_fee The market fee associated with the offer.
     public(package) fun emit_offer_event(
         kiosk: ID,
         offer_id: ID,
@@ -376,6 +439,14 @@ module marketplace::escrow {
         });
     }
 
+    /// @dev Emits an event when an offer is revoked in the marketplace. This event contains 
+    ///      information about the revoked offer, including the kiosk, offer ID, item, price, and associated fees.
+    /// @param kiosk The ID of the kiosk where the offer was listed.
+    /// @param offer_id The ID of the revoked offer.
+    /// @param item The ID of the item being revoked.
+    /// @param price The price of the item (in mist unit).
+    /// @param royalty_fee The royalty fee associated with the revoked offer.
+    /// @param market_fee The market fee associated with the revoked offer.
     public(package) fun emit_revoke_offer_event(
         kiosk: ID,
         offer_id: ID,
@@ -394,6 +465,14 @@ module marketplace::escrow {
         });
     }
 
+    /// @dev Emits an event when an offer is accepted in the marketplace. This event contains 
+    ///      information about the accepted offer, including the kiosk, offer ID, item, price, and associated fees.
+    /// @param kiosk The ID of the kiosk where the offer was accepted.
+    /// @param offer_id The ID of the accepted offer.
+    /// @param item The ID of the item being accepted.
+    /// @param price The price of the item (in mist unit).
+    /// @param royalty_fee The royalty fee associated with the accepted offer.
+    /// @param market_fee The market fee associated with the accepted offer.
     public(package) fun emit_accept_offer_event(
         kiosk: ID,
         offer_id: ID,
@@ -412,6 +491,14 @@ module marketplace::escrow {
         });
     }
 
+    /// @dev Emits an event when an offer is declined in the marketplace. This event contains 
+    ///      information about the declined offer, including the kiosk, offer ID, item, price, and associated fees.
+    /// @param kiosk The ID of the kiosk where the offer was declined.
+    /// @param offer_id The ID of the declined offer.
+    /// @param item The ID of the item being declined.
+    /// @param price The price of the item (in mist unit).
+    /// @param royalty_fee The royalty fee associated with the declined offer.
+    /// @param market_fee The market fee associated with the declined offer.
     public(package) fun emit_decline_offer_event(
         kiosk: ID,
         offer_id: ID,
@@ -431,6 +518,10 @@ module marketplace::escrow {
     }
 
     // ====================== Test ======================
+    /// @dev Returns the offer ID from an `OfferEvent`. This function is used for retrieving 
+    ///      the unique identifier of an offer from an event to test.
+    /// @param event A reference to the `OfferEvent` object containing the offer details.
+    /// @return The ID of the offer from the event.
     #[test_only]
     public fun offer_event_id(event: &OfferEvent): ID {
         event.offer_id

@@ -28,6 +28,14 @@ module marketplace::simple {
     const ENotSameItem: u64 = 402;
     const ENotEnoughFunds: u64 = 403;
 
+    // ==================== User Functions  ========================
+    /// @dev Lists an item on the marketplace with associated price and marketplace fee.
+    ///      This function creates a listing for the item and a corresponding list capability object.
+    ///      It emits a listing event and shares the listing as an object.
+    /// @param self A mutable reference to the marketplace where the item will be listed.
+    /// @param item The item to be listed on the marketplace.
+    /// @param price The price of the item (in mist unit).
+    /// @param ctx The transaction context of the sender.
     public fun list<T: key + store>(
         self: &mut MarketPlace,
         item: T,
@@ -78,6 +86,15 @@ module marketplace::simple {
         transfer::transfer(list_cap, ctx.sender())
     }
 
+    /// @dev Updates the price and marketplace fee of a listed item on the marketplace.
+    ///      This function verifies ownership of the listing and ensures the item IDs match.
+    ///      It also emits an update event reflecting the changes.
+    /// @param self A reference to the marketplace containing the listing.
+    /// @param list A mutable reference to the shared listing information for the item.
+    /// @param list_cap The list capability associated with the item being updated.
+    /// @param item_id The ID of the item being updated in the listing.
+    /// @param price The new price of the listed item (in mist unit).
+    /// @param ctx The transaction context of the sender.
     public fun update_listing<T: key + store>(
         self: &MarketPlace,
         list: &mut SharedListInfo<T>,
@@ -108,6 +125,12 @@ module marketplace::simple {
         );
     }
 
+    /// @dev Removes a listed item from the marketplace. This function validates ownership and item consistency, transfers the item back to the owner, and emits a delist event.
+    /// @param self A mutable reference to the marketplace containing the listing.
+    /// @param list The shared listing information for the item to be delisted.
+    /// @param list_cap The list capability associated with the item being delisted.
+    /// @param item The ID of the item to be delisted from the marketplace.
+    /// @param ctx The transaction context of the sender.
     public fun delist<T: key + store>(
         self: &mut MarketPlace,
         list: SharedListInfo<T>,
@@ -145,6 +168,12 @@ module marketplace::simple {
         cap_id.delete();
     }
 
+    /// @dev Handles the purchase of an item from the marketplace. It checks the payment, transfers the item to the buyer, and processes the marketplace fee and seller's payment.
+    /// @param self A mutable reference to the marketplace handling the transaction.
+    /// @param list The shared listing information for the item being purchased.
+    /// @param item The ID of the item being purchased.
+    /// @param payment The payment coin covering the item's price and the marketplace fee.
+    /// @param ctx The transaction context of the buyer.
     #[allow(lint(self_transfer))]
     public fun buy<T: key + store>(
         self: &mut MarketPlace,
@@ -192,18 +221,30 @@ module marketplace::simple {
 
     // ================ Getter Functions ================
 
+    /// @dev Retrieves the owner of the shared listing.
+    /// @param self A reference to the shared listing information.
+    /// @return The address of the owner of the listing.
     public fun get_owner<T: key + store>(self: &SharedListInfo<T>): address {
         self.owner
     }
 
+    /// @dev Retrieves the price of the item in the shared listing.
+    /// @param self A reference to the shared listing information.
+    /// @return The price of the item in the listing.
     public fun get_price<T: key + store>(self: &SharedListInfo<T>): u64 {
         self.price
     }
 
+    /// @dev Retrieves the item ID from the shared listing.
+    /// @param self A reference to the shared listing information.
+    /// @return The ID of the item in the listing.
     public fun get_item_id<T: key + store>(self: &SharedListInfo<T>): ID {
         self.item_id
     }
 
+    /// @dev Retrieves the marketplace fee associated with the shared listing.
+    /// @param self A reference to the shared listing information.
+    /// @return The marketplace fee for the listing.
     public fun get_fee<T: key + store>(self: &SharedListInfo<T>): u64 {
         self.marketplace_fee
     }
