@@ -44,7 +44,7 @@ module marketplace::escrow_tests {
 
         scenario.next_tx(NFT_CREATOR);
         let (mut policy, policy_cap) = transfer_policy::new_for_testing<DummyItem>(scenario.ctx());
-        royalty_rule::add(&mut policy, &policy_cap, 500, 10);
+        royalty_rule::add(&mut policy, &policy_cap, 500, 20000);
 
         scenario.next_tx(NFT_CREATOR);
         let item = prepare_dummy_item(&mut scenario, ITEM_OWNER);
@@ -55,29 +55,27 @@ module marketplace::escrow_tests {
 
         scenario.next_tx(OFFER_CREATOR);
         let (mut offerer_kiosk, offerer_personal_kiosk_cap) = create_kiosk(&mut scenario);
-        let price: u64 = 1000;
-        let marketplace_fee = price * (personal_fee[0] as u64) / 10_000;
-        let royalty_fee: u64 = price * 500 / 10_000;
+        let price: u64 = 30000000;
+        // let marketplace_fee = price * (personal_fee[0] as u64) / 10_000;
+        // let royalty_fee: u64 = price * 500 / 10_000;
         let offer_creator_coin = coin::mint_for_testing<SUI>(
-            price + royalty_fee + marketplace_fee,
+            price,
             scenario.ctx(),
         );
         escrow::offer<DummyItem>(
             &mut offerer_kiosk,
             offerer_personal_kiosk_cap.borrow(),
             item_id,
-            price,
+            // price,
             offer_creator_coin,
             &policy,
-            &mut market,
+            &market,
             scenario.ctx(),
         );
 
-        // scenario.next_tx(OFFER_CREATOR);
         let offer_events = event::events_by_type<OfferEvent>();
         let offer_event = offer_events[0];
         let offer_id = offer_event_id(&offer_event);
-        // let offer_id = offer_events.borrow<OfferEvent>(0).offer_event_id();
 
         scenario.next_tx(ITEM_OWNER);
         accepter_kiosk.place<DummyItem>(accepter_personal_kiosk_cap.borrow(), item);
@@ -95,10 +93,8 @@ module marketplace::escrow_tests {
         );
         escrow::confirm_offer_accepted(offer_wrapper, request, &policy, scenario.ctx());
 
-        // test_scenario::return_to_address(MARKET_OWNER, market_owner_cap);
         destroy(market_owner_cap);
         destroy(admin_cap);
-        // test_scenario::return_to_address(MARKET_OWNER, admin_cap);
 
         destroy(policy_cap);
         destroy(offerer_personal_kiosk_cap);
@@ -108,20 +104,6 @@ module marketplace::escrow_tests {
         destroy(policy);
         destroy(offerer_kiosk);
         destroy(accepter_kiosk);
-        // test_scenario::return_to_address(NFT_CREATOR, policy_cap);
-        // test_scenario::return_to_address(OFFER_CREATOR, offerer_personal_kiosk_cap);
-
-        // test_scenario::return_to_address(ITEM_OWNER, accepter_personal_kiosk_cap);
-        // test_scenario::return_shared(market);
-        // test_scenario::return_shared(s_roles);
-        // test_scenario::return_shared(policy);
-        // test_scenario::return_shared(offerer_kiosk);
-        // destroy(offerer_kiosk);
-
-        // test_scenario::return_shared(accepter_kiosk);
-        // destroy(accepter_personal_kiosk_cap);
-        // destroy(accepter_kiosk);
-
         scenario.end();
     }
 

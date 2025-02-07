@@ -7,6 +7,7 @@ authors = [
   "Tommy",
 ]
 version = "1"
+# published-at="0xc4863ad88d7869b2f148ee9b8414c1f8024dcb90e2d841f882242ff797acba5c"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet", override = true }

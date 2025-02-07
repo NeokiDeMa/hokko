@@ -482,8 +482,14 @@ module marketplace::marketplace {
 
         let mut i = 0;
         while (i < recipient.length()) {
-            map::insert(&mut self.personalFee, recipient[i], fee[i]);
-            i = i + 1;
+            if (map::contains<address, u16>(&self.personalFee, &recipient[i])) {
+                let old_fee = map::get_mut<address, u16>(&mut self.personalFee, &recipient[i]);
+                *old_fee = fee[i];
+                i = i + 1;
+            } else {
+                map::insert(&mut self.personalFee, recipient[i], fee[i]);
+                i = i + 1;
+            };
         };
         emit(PersonalFeeSetEvent {
             recipient: recipient,
@@ -765,7 +771,6 @@ module marketplace::marketplace {
             buyer,
         });
     }
-
     /// @dev Execute init() for test.
     /// @param ctx Sender's tx context.
     #[test_only]

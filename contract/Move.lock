@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "033AA5AE6EA96A62585B95CB67E315748FB591529F7DFDBF2029EB1FC9F4137B"
+manifest_digest = "9EA4FD978552E2AA7950D6ED65383932F51DF468D147D9E2C7A67088A2363226"
 deps_digest = "060AD7E57DFB13104F21BE5F5C3759D03F0553FC3229247D9A7A6B45F50D03A3"
 dependencies = [
   { id = "Kiosk", name = "Kiosk" },
@@ -39,7 +39,7 @@ dependencies = [
 ]
 
 [move.toolchain-version]
-compiler-version = "1.40.1"
+compiler-version = "1.41.0"
 edition = "2024.beta"
 flavor = "sui"
 
@@ -47,6 +47,6 @@ flavor = "sui"
 
 [env.mainnet]
 chain-id = "35834a8a"
-original-published-id = "0xc4863ad88d7869b2f148ee9b8414c1f8024dcb90e2d841f882242ff797acba5c"
-latest-published-id = "0xc4863ad88d7869b2f148ee9b8414c1f8024dcb90e2d841f882242ff797acba5c"
+original-published-id = "0x3ecb09e48fa93da6b7e99601c3a8f8ebb6628238e230ba26e72d77d0df5a20c6"
+latest-published-id = "0x3ecb09e48fa93da6b7e99601c3a8f8ebb6628238e230ba26e72d77d0df5a20c6"
 published-version = "1"

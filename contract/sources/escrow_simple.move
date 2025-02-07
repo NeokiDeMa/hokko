@@ -28,11 +28,11 @@ module marketplace::escrow_simple {
         offer: ID,
     }
 
-    public struct Ext has drop {}
+    // public struct Ext has drop {}
 
     // ====================== Public Functions ======================
 
-    /// @dev Creates a new offer for an item in the marketplace, emits an event for the offer, 
+    /// @dev Creates a new offer for an item in the marketplace, emits an event for the offer,
     ///      stores the offer in the marketplace, and transfers the offer capability to the offerer.
     /// @param market A mutable reference to the marketplace where the offer is being listed.
     /// @param item_id The ID of the item being offered.
@@ -43,14 +43,12 @@ module marketplace::escrow_simple {
     public fun offer<T: key + store>(
         market: &mut MarketPlace,
         item_id: ID,
-        price: u64,
         payment: Coin<SUI>,
         ctx: &mut TxContext,
     ) {
         let (offer, offer_cap) = new_offer<T>(
             market,
             item_id,
-            price,
             payment,
             ctx,
         );
@@ -74,7 +72,7 @@ module marketplace::escrow_simple {
         transfer::transfer(offer_cap, tx_context::sender(ctx));
     }
 
-    /// @dev Revokes an existing offer in the marketplace, removes it from the marketplace, 
+    /// @dev Revokes an existing offer in the marketplace, removes it from the marketplace,
     ///      emits a revoke event, and transfers the remaining balance to the offer's owner.
     /// @param market A mutable reference to the marketplace where the offer is being revoked.
     /// @param offer_id The ID of the offer to be revoked.
@@ -106,7 +104,7 @@ module marketplace::escrow_simple {
         transfer::public_transfer(coin, tx_context::sender(ctx));
     }
 
-    /// @dev Accepts an offer in the marketplace, transfers the item, pays the market fee, 
+    /// @dev Accepts an offer in the marketplace, transfers the item, pays the market fee,
     ///      and returns the remaining balance to the offer owner.
     /// @param market A mutable reference to the marketplace where the offer is being accepted.
     /// @param offer_id The ID of the offer being accepted.
@@ -134,16 +132,17 @@ module marketplace::escrow_simple {
         transfer::public_transfer(item_price_coin, tx_context::sender(ctx));
         transfer::public_transfer(item, offer.owner);
 
-        let Offer { id, owner, item, price, market_fee: _, balance } = offer;
+        let Offer { id, owner: _, item, price, market_fee: _, balance } = offer;
 
         let mut remain_coin = coin::zero<SUI>(ctx);
         remain_coin.balance_mut().join(balance);
-        transfer::public_transfer(remain_coin, owner);
+        transfer::public_transfer(remain_coin, ctx.sender());
         object::delete(id);
 
         escrow::emit_accept_offer_event(object::id(market), offer_id, item, price, 0, market_fee);
     }
-    /// @dev Declines an offer in the marketplace, removes it, and transfers the remaining balance 
+
+    /// @dev Declines an offer in the marketplace, removes it, and transfers the remaining balance
     ///      back to the offer owner. Emits a decline event.
     /// @param market A mutable reference to the marketplace where the offer is being declined.
     /// @param offer_id The ID of the offer being declined.
@@ -186,27 +185,26 @@ module marketplace::escrow_simple {
     /// @param price The price of the item (in mist unit).
     /// @param payment The payment (in SUI) for the offer, which includes the price and market fee.
     /// @param ctx The transaction context of the sender.
-    public fun new_offer<T: key + store>(
-        market: &mut MarketPlace,
+    fun new_offer<T: key + store>(
+        market: &MarketPlace,
         item_id: ID,
-        price: u64,
         payment: Coin<SUI>,
         ctx: &mut TxContext,
     ): (Offer<T>, OfferCap<T>) {
+        let balance = payment.into_balance();
+        let value = balance.value();
         let market_fee =
             (
-                ((marketplace::get_fee(market, tx_context::sender(ctx)) as u128) * (price as u128)) / 10000,
+                ((marketplace::get_fee(market, tx_context::sender(ctx)) as u128) * (value as u128)) / 10000,
             ) as u64;
 
-        assert!(payment.value() >= price + market_fee, EInsufficientAmount);
-
-        let balance = payment.into_balance();
+        assert!(value >=  market_fee, EInsufficientAmount);
 
         let offer = Offer<T> {
             id: object::new(ctx),
             owner: tx_context::sender(ctx),
             item: item_id,
-            price: price,
+            price: value,
             market_fee: market_fee,
             balance,
         };

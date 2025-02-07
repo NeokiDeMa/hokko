@@ -33,9 +33,47 @@ module marketplace::market_kiosk_tests {
         id: UID,
     }
 
-    // #[test]
-    // fun test_Take_stuff() {
-    // }
+    #[test]
+    fun test_reset_personal_fee() {
+        let personal_fee: vector<u16> = vector[50];
+        let owner_address_array: vector<address> = vector[OWNER];
+
+        let mut scen = scen::begin(OWNER);
+
+        // let (market, mut kiosk, pkc) = initial_setup(&mut scen);
+        let (mut market, owner_cap, s_roles, dummy_item, admin_cap) = init_setup(&mut scen);
+        scen.next_tx(OWNER);
+        marketplace::set_personal_fee(
+            &mut market,
+            &admin_cap,
+            &s_roles,
+            owner_address_array,
+            personal_fee,
+        );
+
+        let owners_fee = market.get_fee(OWNER);
+        assert_eq(owners_fee, 50);
+
+        let new_personal_fee: vector<u16> = vector[200];
+        scen.next_tx(OWNER);
+        marketplace::set_personal_fee(
+            &mut market,
+            &admin_cap,
+            &s_roles,
+            owner_address_array,
+            new_personal_fee,
+        );
+        // scen.next_tx(OWNER);
+        // let new_owners_fee = market.get_fee(OWNER);
+        // assert_eq(new_owners_fee, 200);
+
+        destroy(market);
+        destroy(owner_cap);
+        destroy(s_roles);
+        destroy(admin_cap);
+        destroy(dummy_item);
+        end(scen);
+    }
     #[test]
     fun test_list_item() {
         let price: u64 = 200;
