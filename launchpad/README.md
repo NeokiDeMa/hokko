@@ -4,7 +4,10 @@
 Add this in your project Move.toml file:
 ```toml 
 [dependencies]
-launchpad = {git = "https://github.com/NeokiDeMa/hokko.git", subdir = "launchpad", rev = "main"}
+launchpad = {git = "https://github.com/NeokiDeMa/hokko.git", subdir = "launchpad", rev = "testnet"}
+
+# objects 
+# Launchpad object = 0x8ccd290c321f42159b2992bc316c07d42d1bd3b208df794c700e3a849420b7a5
 
 ```
 
@@ -28,8 +31,6 @@ The Launchpad package contains 4 modules:
   balance, and the rest goes to the `Collection` balance.
 - Minting goes through the developer's NFT contract using the `launchpad::mint` or `launchpad::mint_with_kiosk`
   functions.
-
-## Modules
 
 ### Launchpad module
 
@@ -68,4 +69,3 @@ View functions can be called by any account. Admin functions require the appropr
 - `update_whitelist`: If the whitelist is enabled updates the whitelist with addresses and allocations.
 - `pause`: Pauses the collection.
 - `resume`: Resumes the collection.
-- `withdraw`: Withdraws the balance from the collection.

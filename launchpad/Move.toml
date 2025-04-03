@@ -9,8 +9,8 @@ authors = [
 
 [dependencies]
 # Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet", override = true }
-Kiosk = { git = "https://github.com/MystenLabs/apps.git", subdir = "kiosk", rev = "main" }
-access_control = { git = "https://github.com/Reblixt/Sui-Access-Control.git", rev = "main" }
+Kiosk = { git = "https://github.com/MystenLabs/apps.git", subdir = "kiosk", rev = "testnet" }
+access_control = { git = "https://github.com/Reblixt/Sui-Access-Control.git", rev = "testnet" }
 # For remote import, use the `{ git = "...", subdir = "...", rev = "..." }`.
 # Revision can be a branch, a tag, and a commit hash.
 # MyRemotePackage = { git = "https://some.remote/host.git", subdir = "remote/path", rev = "main" }
@@ -23,7 +23,7 @@ access_control = { git = "https://github.com/Reblixt/Sui-Access-Control.git", re
 # Override = { local = "../conflicting/version", override = true }
 
 [addresses]
-launchpad = "0x505d3312c378af62df934215ed14d31858263e9825c09bf73b13f893aeed13fd"
+launchpad = "0x84540d989250a26207d9f71765ec75b18bc7bb6ae73de3b1d5931f9370885a2d"
 
 # Named addresses will be accessible in Move as `@name`. They're also exported:
 # for example, `std = "0x1"` is exported by the Standard Library.
