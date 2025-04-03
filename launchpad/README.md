@@ -5,6 +5,7 @@ Add this in your project Move.toml file:
 ```toml 
 [dependencies]
 launchpad = {git = "https://github.com/NeokiDeMa/hokko.git", subdir = "launchpad", rev = "main"}
+# launchpad = {git = "https://github.com/NeokiDeMa/hokko.git", subdir = "launchpad", rev = "testnet"}
 
 ```
 
