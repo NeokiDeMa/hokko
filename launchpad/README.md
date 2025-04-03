@@ -29,10 +29,6 @@ The Launchpad package contains 4 modules:
 - Minting goes through the developer's NFT contract using the `launchpad::mint` or `launchpad::mint_with_kiosk`
   functions.
 
-- The `Admin` can approve or reject the collection.
-- The `Admin` can pause or resume the collection, which is approved to pause/resume minting.
-- The `Admin` can withdraw the balance (fees) from the launchpad.
-
 ## Modules
 
 ### Launchpad module
@@ -47,16 +43,6 @@ View functions can be called by any account. Admin functions require the appropr
 #### View Functions
 
 - `collection_state`: Returns `LaunchpadCollectionState`, the current state of the collection in the launchpad.
-
-#### Admin Functions
-
-- `approve_collection`: Approves the collection.
-- `reject_collection`: Rejects the collection.
-- `pause_collection`: Pauses the collection by Admin.
-- `resume_collection`: Resumes the collection by Admin.
-- `withdraw`: Withdraws the balance from the launchpad by Admin.
-
-### Collection module
 
 #### Structs
 
